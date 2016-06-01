@@ -1,0 +1,3 @@
+﻿  UThread.c
+c:\users\rui\desktop\isel\2º ano - 2º semestre\sistemas operativos\uthreads\uthreads\uthreads\uthread\uthread.c(442): warning C4013: 'CompareEntryLists' undefined; assuming extern returning int
+  UThread.vcxproj -> C:\Users\Rui\Desktop\ISEL\2º Ano - 2º Semestre\Sistemas Operativos\UTHREADS\UTHREADS\Uthreads\Debug\UThread.dll
