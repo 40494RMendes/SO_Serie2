@@ -50,7 +50,6 @@ static
 PUTHREAD RunningThread;
 
 
-
 //
 // The user thread proxy of the underlying operating system thread. This
 // thread is switched back in when there are no more runnable user threads,
@@ -58,6 +57,13 @@ PUTHREAD RunningThread;
 //
 static
 PUTHREAD MainThread;
+
+// Pointer to the thread to terminate. Set by UtTerminateThread function.
+//
+static
+PUTHREAD ToTerminateThread;
+
+
 
 ////////////////////////////////////////////////
 //
@@ -122,6 +128,7 @@ PUTHREAD ExtractNextReadyThread () {
 static
 FORCEINLINE
 VOID Schedule () {
+	CheckForUtTerminate();
 	PUTHREAD NextThread;
     NextThread = ExtractNextReadyThread();
 	NextThread->State = 0;
@@ -129,6 +136,23 @@ VOID Schedule () {
 	ContextSwitch(RunningThread, NextThread);
 }
 
+VOID CheckForUtTerminate() {
+	if (ToTerminateThread == NULL)
+		return;
+	if (RunningThread == ToTerminateThread) {
+		ToTerminateThread = NULL;
+		UtExit();
+	}
+	else {
+		NumberOfThreads -= 1;
+		RemoveEntryList(&ToTerminateThread->Link);
+		RemoveEntryList(&ToTerminateThread->ActiveLink);
+		CleanupThread(ToTerminateThread);
+		ToTerminateThread = NULL;
+	}
+
+	return;
+}
 ///////////////////////////////
 //
 // UThread public operations.
@@ -202,7 +226,9 @@ VOID UtExit () {
 	_ASSERTE(UtAlive((HANDLE)RunningThread) == 1);
 	RemoveEntryList(&RunningThread->ActiveLink);
 	_ASSERTE(UtAlive((HANDLE)RunningThread) == 0);
-	InternalExit(RunningThread, ExtractNextReadyThread());
+	PUTHREAD NextThread = ExtractNextReadyThread();
+	NextThread->State = 0;
+	InternalExit(RunningThread, NextThread);
 	_ASSERTE(!"Supposed to be here!");
 }
 
@@ -439,8 +465,8 @@ BOOL UtAlive(HANDLE thread) {
 	PUTHREAD p = (PUTHREAD)thread;
 	LIST_ENTRY  curr = *ActiveThreadsQueue.Flink;
 
-	while (!CompareEntryLists(&curr, &ActiveThreadsQueue)) {
-		if (CompareEntryLists(&curr, &p->ActiveLink)) {
+	while (!EqualEntryLists(&curr, &ActiveThreadsQueue)) {
+		if (EqualEntryLists(&curr, &p->ActiveLink)) {
 			return 1;
 		}
 		curr = *curr.Flink;
@@ -451,8 +477,16 @@ BOOL UtAlive(HANDLE thread) {
 
 //Auxiliary Function for UtAlive Checks if 2 LIST_ENTRY are equal
 
-BOOL CompareEntryLists(PLIST_ENTRY p1, PLIST_ENTRY p2) {
+BOOL EqualEntryLists(PLIST_ENTRY p1, PLIST_ENTRY p2) {
 	return p1->Blink == p2->Blink && p1->Flink == p2->Flink;
+}
+
+//
+//
+//
+
+VOID UtTerminateThread(HANDLE tHandle) {
+	ToTerminateThread = (PUTHREAD)tHandle;
 }
 
 #else
