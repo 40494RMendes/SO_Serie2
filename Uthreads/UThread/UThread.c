@@ -258,6 +258,7 @@ HANDLE UtSelf () {
 // Halts the execution of the current user thread.
 //
 VOID UtDeactivate() {
+	(PUTHREAD)RunningThread->State = 2;
 	Schedule();
 }
 
@@ -496,13 +497,15 @@ VOID UtTerminateThread(HANDLE tHandle) {
 
 BOOL UtMultJoin(HANDLE handle[], int size) {
 
+	UtInitCounterLatch(BlockedThreadsQueue, size);
 	for (int i = 0; i < size; i++) {
 
 		if ((!UtAlive(handle[i]) || handle[i] == RunningThread))   // Or UtSelf()
 			return 0;
+
+		UtWaitCounterLatch(BlockedThreadsQueue);
+
 	}
-	//  Criar CountDownLatch com size e depois chamar
-	//  Ir decrementando o semáforo em UtExit
 
 	return 1;
 
