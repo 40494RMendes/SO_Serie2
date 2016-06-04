@@ -42,6 +42,13 @@ static
 LIST_ENTRY ActiveThreadsQueue;
 
 //
+// The sentinel of a Blocked Threads
+//
+
+static
+LIST_ENTRY BlockedThreadsQueue;
+
+//
 // The currently executing thread.
 //
 #ifndef UTHREAD_X64
@@ -214,18 +221,15 @@ VOID UtRun () {
 	MainThread = NULL;
 }
 
-
-
-
 //
 // Terminates the execution of the currently running thread. All associated
 // resources are released after the context switch to the next ready thread.
 //
 VOID UtExit () {
 	NumberOfThreads -= 1;
-	_ASSERTE(UtAlive((HANDLE)RunningThread) == 1);
+//	_ASSERTE(UtAlive((HANDLE)RunningThread) == 1);
 	RemoveEntryList(&RunningThread->ActiveLink);
-	_ASSERTE(UtAlive((HANDLE)RunningThread) == 0);
+//	_ASSERTE(UtAlive((HANDLE)RunningThread) == 0);
 	PUTHREAD NextThread = ExtractNextReadyThread();
 	NextThread->State = 0;
 	InternalExit(RunningThread, NextThread);
@@ -487,6 +491,21 @@ BOOL EqualEntryLists(PLIST_ENTRY p1, PLIST_ENTRY p2) {
 
 VOID UtTerminateThread(HANDLE tHandle) {
 	ToTerminateThread = (PUTHREAD)tHandle;
+	UtYield();
+}
+
+BOOL UtMultJoin(HANDLE handle[], int size) {
+
+	for (int i = 0; i < size; i++) {
+
+		if ((!UtAlive(handle[i]) || handle[i] == RunningThread))   // Or UtSelf()
+			return 0;
+	}
+	//  Criar CountDownLatch com size e depois chamar
+	//  Ir decrementando o semáforo em UtExit
+
+	return 1;
+
 }
 
 #else

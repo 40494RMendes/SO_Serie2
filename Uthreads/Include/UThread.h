@@ -95,6 +95,9 @@ INT UtThreadState(HANDLE thread);
 UTHREAD_API
 BOOL UtAlive(HANDLE thread);
 
+UTHREAD_API
+BOOL UtMultJoin(HANDLE handle[], int size);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif
