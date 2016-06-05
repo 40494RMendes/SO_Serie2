@@ -1,1 +1,4 @@
-﻿  SimpleTest.vcxproj -> C:\Users\CP\Desktop\SOThings\se2\SO_Serie2\Uthreads\Debug\SimpleTest.exe
+﻿  stdafx.cpp
+  SimpleTest.cpp
+c:\users\cp\desktop\sothings\se2\so_serie2\uthreads\simpletest\simpletest.cpp(39): warning C4302: 'type cast': truncation from 'UT_ARGUMENT' to 'UCHAR'
+  SimpleTest.vcxproj -> C:\Users\CP\Desktop\SOThings\se2\SO_Serie2\Uthreads\Debug\SimpleTest.exe

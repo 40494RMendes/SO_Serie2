@@ -14,7 +14,6 @@ VOID UtWaitCounterLatch(PUTHREAD_COUNTER_LATCH pcount) {
 		WAIT_BLOCK wb;
 		wb.Thread = UtSelf();
 		InsertTailList(&pcount->WaitListHead, &wb.Link);
-// inserir no blok
 		UtDeactivate();
 	}
 }

@@ -1,1 +1,7 @@
-﻿  USynch.vcxproj -> C:\Users\CP\Desktop\SOThings\se2\SO_Serie2\Uthreads\Debug\USynch.dll
+﻿  Event.c
+  Mutex.c
+  Semaphore.c
+  CountDownLatch.c
+  Generating Code...
+     Creating library C:\Users\CP\Desktop\SOThings\se2\SO_Serie2\Uthreads\Debug\USynch.lib and object C:\Users\CP\Desktop\SOThings\se2\SO_Serie2\Uthreads\Debug\USynch.exp
+  USynch.vcxproj -> C:\Users\CP\Desktop\SOThings\se2\SO_Serie2\Uthreads\Debug\USynch.dll

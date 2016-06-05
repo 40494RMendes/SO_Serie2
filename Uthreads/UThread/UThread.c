@@ -42,11 +42,11 @@ static
 LIST_ENTRY ActiveThreadsQueue;
 
 //
-// The sentinel of a Blocked Threads
+// The sentinel of a Join Threads
 //
 
 static
-LIST_ENTRY BlockedThreadsQueue;
+LIST_ENTRY JoinThreadsQueue;
 
 //
 // The currently executing thread.
@@ -154,7 +154,9 @@ VOID CheckForUtTerminate() {
 		NumberOfThreads -= 1;
 		RemoveEntryList(&ToTerminateThread->Link);
 		RemoveEntryList(&ToTerminateThread->ActiveLink);
-		CleanupThread(ToTerminateThread);
+//		CleanupThread((PUTHREAD)ToTerminateThread);
+		free(ToTerminateThread->Stack);
+		free(ToTerminateThread);
 		ToTerminateThread = NULL;
 	}
 
@@ -172,6 +174,7 @@ VOID CheckForUtTerminate() {
 VOID UtInit() {
 	InitializeListHead(&ReadyQueue);
 	InitializeListHead(&ActiveThreadsQueue);
+	InitializeListHead(&JoinThreadsQueue);
 }
 
 //
@@ -227,14 +230,29 @@ VOID UtRun () {
 //
 VOID UtExit () {
 	NumberOfThreads -= 1;
-//	_ASSERTE(UtAlive((HANDLE)RunningThread) == 1);
 	RemoveEntryList(&RunningThread->ActiveLink);
-//	_ASSERTE(UtAlive((HANDLE)RunningThread) == 0);
+
 	PUTHREAD NextThread = ExtractNextReadyThread();
 	NextThread->State = 0;
+
+	PUTHREAD FThread;
+	LIST_ENTRY  curr = *JoinThreadsQueue.Flink;
+
+	while (!EqualEntryLists(&curr, &JoinThreadsQueue)) {	
+		FThread = CONTAINING_RECORD(JoinThreadsQueue.Flink, UTHREAD, JoinLink);
+//Adjust
+		FThread->Count -= 1;
+		if (FThread->Count == 0) {
+			RemoveEntryList(&FThread->JoinLink);
+			InsertTailList(&ReadyQueue, &FThread->Link);
+		}
+		curr = *curr.Flink;
+	}
+
 	InternalExit(RunningThread, NextThread);
-	_ASSERTE(!"Supposed to be here!");
+
 }
+
 
 //
 // Relinquishes the processor to the first user thread in the ready queue.
@@ -258,7 +276,7 @@ HANDLE UtSelf () {
 // Halts the execution of the current user thread.
 //
 VOID UtDeactivate() {
-	(PUTHREAD)RunningThread->State = 2;
+	RunningThread->State = 2;   // State = 2 (Thread Blocked
 	Schedule();
 }
 
@@ -268,7 +286,7 @@ VOID UtDeactivate() {
 // becomes eligible to run.
 //
 VOID UtActivate (HANDLE ThreadHandle) {
-	((PUTHREAD)ThreadHandle)->State = 1;
+	((PUTHREAD)ThreadHandle)->State = 1;    // State = 1 (Thread Ready)
 	InsertTailList(&ReadyQueue, &((PUTHREAD)ThreadHandle)->Link);
 	InsertTailList(&ActiveThreadsQueue, &((PUTHREAD)ThreadHandle)->ActiveLink);
 }
@@ -462,8 +480,26 @@ INT UtThreadState(HANDLE thread) {
 	return ((PUTHREAD)thread)->State;
 }
 
+
+VOID UtViewUtThreadState(INT val) {
+
+	if (val == 0) {
+		printf("Thread Running");
+	}
+	else if (val == 1) {
+		printf("Thread Ready");
+	}
+	else if (val == 2){
+		printf("Thread Blocked");
+	}
+	else {
+		printf("Thread Terminated");
+	}
+}
+
+
 //
-//
+//   Manage List of Alive threads
 //
 
 BOOL UtAlive(HANDLE thread) {
@@ -471,6 +507,7 @@ BOOL UtAlive(HANDLE thread) {
 	LIST_ENTRY  curr = *ActiveThreadsQueue.Flink;
 
 	while (!EqualEntryLists(&curr, &ActiveThreadsQueue)) {
+
 		if (EqualEntryLists(&curr, &p->ActiveLink)) {
 			return 1;
 		}
@@ -487,28 +524,40 @@ BOOL EqualEntryLists(PLIST_ENTRY p1, PLIST_ENTRY p2) {
 }
 
 //
-//
-//
+// Terminate Thread - Updates ToTerminateThread Static variable and changes 
+// context with UtYield function
 
 VOID UtTerminateThread(HANDLE tHandle) {
+
 	ToTerminateThread = (PUTHREAD)tHandle;
 	UtYield();
 }
 
+//
+//
+//
+
 BOOL UtMultJoin(HANDLE handle[], int size) {
 
-	UtInitCounterLatch(BlockedThreadsQueue, size);
+	PUTHREAD curr = UtSelf();
+
+	for (int i = 0; i < size; i++) {
+		if ((!UtAlive(handle[i]) || handle[i] == curr))   // Or UtSelf()
+			return 0;
+	}
+	
 	for (int i = 0; i < size; i++) {
 
-		if ((!UtAlive(handle[i]) || handle[i] == RunningThread))   // Or UtSelf()
-			return 0;
-
-		UtWaitCounterLatch(BlockedThreadsQueue);
+		InsertTailList(&((PUTHREAD)handle[i])->JoinLink, &((PUTHREAD)curr)->JoinLink);
+		curr->Count += 1;
 
 	}
 
-	return 1;
+	RemoveEntryList(&((PUTHREAD)curr)->Link);
+	curr->State = 2;
+	ContextSwitch(curr, handle[0]);
 
+	return 1;
 }
 
 #else

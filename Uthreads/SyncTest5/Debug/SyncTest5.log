@@ -1,2 +1,2 @@
 ﻿  TestApp.cpp
-  SyncTest5.vcxproj -> C:\Users\CP\Desktop\SOThings\Código\Uthreads\Uthreads\Debug\SyncTest5.exe
+LINK : fatal error LNK1104: cannot open file 'C:\Users\CP\Desktop\SOThings\se2\SO_Serie2\Uthreads\Debug\USynch.lib'

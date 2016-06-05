@@ -98,6 +98,18 @@ BOOL UtAlive(HANDLE thread);
 UTHREAD_API
 BOOL UtMultJoin(HANDLE handle[], int size);
 
+UTHREAD_API
+VOID CheckForUtTerminate();
+
+UTHREAD_API
+BOOL EqualEntryLists(PLIST_ENTRY p1, PLIST_ENTRY p2);
+
+UTHREAD_API
+VOID UtViewUtThreadState(INT val);
+
+UTHREAD_API
+VOID UtTerminateThread(HANDLE tHandle);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

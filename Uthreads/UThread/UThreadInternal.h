@@ -59,8 +59,10 @@ typedef struct _UTHREAD {
 	UT_FUNCTION      Function;   
 	UT_ARGUMENT      Argument; 
 	PUCHAR           Stack;
-	INT				 State;
+	INT				 State;        // 0 - RunningThread; 1 - Ready; 2 - Blocked
 	LIST_ENTRY		 ActiveLink;
+	LIST_ENTRY       JoinLink;
+	INT              Count;     
 } UTHREAD, *PUTHREAD;
 
 //

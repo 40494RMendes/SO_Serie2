@@ -57,10 +57,13 @@ VOID Test1 ()  {
 	Test1_Count = 0; 
 
 	printf("\n :: Test 1 - BEGIN :: \n\n");
+	HANDLE handleArray [MAX_THREADS];
 
 	for (Index = 0; Index < MAX_THREADS; ++Index) {
-		UtCreate(Test1_Thread, (UT_ARGUMENT) ('0' + Index));
+		handleArray[Index] = UtCreate(Test1_Thread, (UT_ARGUMENT) ('0' + Index));
+		printf("\n\n Thread ");
 	}   
+
 
 	UtRun();
 
